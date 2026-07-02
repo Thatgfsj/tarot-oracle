@@ -19,7 +19,7 @@
         android:label="塔罗镜"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ChiefApp">
+        android:theme="@style/Theme.TarotOracle">
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -58,7 +58,6 @@ dependencies {
     implementation(libs.compose.ui.tooling)
     implementation(libs.compose.material3)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.okhttp)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
 

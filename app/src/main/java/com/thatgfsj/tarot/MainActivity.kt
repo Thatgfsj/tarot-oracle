@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.thatgfsj.tarot.ui.oracle.TarotScreen
-import com.thatgfsj.tarot.ui.theme.ChiefAppTheme
+import com.thatgfsj.tarot.ui.theme.TarotOracleTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: TarotViewModel by viewModels()
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ChiefAppTheme {
+            TarotOracleTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     TarotScreen(viewModel)
                 }

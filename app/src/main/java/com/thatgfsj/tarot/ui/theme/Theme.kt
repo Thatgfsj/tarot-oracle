@@ -64,7 +64,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun ChiefAppTheme(
+fun TarotOracleTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,

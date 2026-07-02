@@ -1,6 +1,7 @@
 package com.thatgfsj.tarot.ui.oracle
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -107,33 +108,24 @@ fun TarotScreen(viewModel: TarotViewModel = viewModel()) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        Column(
+        // Header + state content centered as a single block.
+        // Previously Header was pinned to the top (Spacer 40dp
+        // + Header + Spacer 24dp) and only the content below
+        // was centered — making the top gap much smaller than
+        // the bottom gap. Now everything lives inside one
+        // centered Column so the whole block is symmetric.
+        Box(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top,
+            contentAlignment = Alignment.Center,
         ) {
-            // Header sits at the top, sized to its content.
-            // The state (home page / loaded view) takes the
-            // remaining space and is centered within that
-            // remaining space by Arrangement.SpaceBetween
-            // on the inner layout — see HomePage and
-            // LoadedView below, which now use a vertical-
-            // center fillMaxSize Box of their own.
-            Spacer(Modifier.height(40.dp))
-            Header()
-            Spacer(Modifier.height(24.dp))
-
-            // Wrap the state's content in a Box that takes
-            // the remaining height (weight 1f) and centers
-            // vertically, so the home-page buttons / the
-            // loaded-view card sit in the middle of the
-            // screen, not glued to the top below the header.
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
+                Header()
                 when (val s = state) {
                     is TarotUiState.Initial -> HomePage(
                         onDrawOne = viewModel::drawOne,
@@ -143,11 +135,7 @@ fun TarotScreen(viewModel: TarotViewModel = viewModel()) {
                         drawn = s.drawn,
                         onClear = viewModel::clear,
                     )
-                    is TarotUiState.Error -> {
-                        // Shouldn't happen for a built APK
-                        // (assets/cards.json is verified at
-                        // build time).
-                    }
+                    is TarotUiState.Error -> {}
                 }
             }
         }
@@ -172,13 +160,6 @@ private fun Header() {
             fontFamily = FontFamily.Serif,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "心诚则灵",
-            fontFamily = FontFamily.Serif,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         )
     }
 }
@@ -316,25 +297,18 @@ private fun SingleCardView(drawn: DrawnCard) {
     var rotation by remember { mutableStateOf(0f) }
     var flipped by remember { mutableStateOf(false) }
     val flippedX = if (drawn.reversed) 180f else 0f
-    val targetRotation = if (flipped) 360f else 0f
-    // Animate to the target whenever it changes — i.e. on
-    // every tap. Tapping the card flips rotation between
-    // 0° and 360° (1.5s round-trip, but the chairman can
-    // interrupt by tapping again — Animatable.animateTo
-    // cancels the running animation).
-    LaunchedEffect(rotation) {
-        if (flipped && rotation == 360f) {
-            // already at target, no-op
-            return@LaunchedEffect
-        }
-        val anim = androidx.compose.animation.core.Animatable(targetRotation)
+    // Drive animation from `flipped` — this is what the tap
+    // changes. `rotation` is the animated output, not the
+    // trigger. Previous code used LaunchedEffect(rotation)
+    // which never re-fired because rotation only changes at
+    // the end of the animation (chicken-and-egg).
+    LaunchedEffect(flipped) {
+        val target = if (flipped) 360f else 0f
+        val anim = Animatable(rotation)
         anim.animateTo(
-            targetValue = (if (flipped) 360f else 0f),
+            targetValue = target,
             animationSpec = tween(durationMillis = 800, easing = LinearEasing),
         )
-        // Sync local rotation to the animated value on
-        // completion. We need this because AnimatedImage
-        // binds to `rotation` reactively.
         rotation = anim.value
     }
     val scale = animateFloatAsState(
@@ -422,12 +396,11 @@ private fun SpreadCard(drawn: DrawnCard, position: String) {
     var rotation by remember { mutableStateOf(0f) }
     var flipped by remember { mutableStateOf(false) }
     val flippedX = if (drawn.reversed) 180f else 0f
-    LaunchedEffect(rotation) {
-        val anim = androidx.compose.animation.core.Animatable(
-            if (flipped) 360f else 0f
-        )
+    LaunchedEffect(flipped) {
+        val target = if (flipped) 360f else 0f
+        val anim = Animatable(rotation)
         anim.animateTo(
-            targetValue = if (flipped) 360f else 0f,
+            targetValue = target,
             animationSpec = tween(durationMillis = 800, easing = LinearEasing),
         )
         rotation = anim.value
@@ -445,7 +418,7 @@ private fun SpreadCard(drawn: DrawnCard, position: String) {
             contentDescription = drawn.card.name_zh,
             contentScale = ContentScale.Fit,
             modifier = Modifier
-                .size(width = 80.dp, height = 115.dp)
+                .size(width = 110.dp, height = 160.dp)
                 .graphicsLayer {
                     rotationY = rotation
                     rotationX = flippedX
@@ -458,14 +431,14 @@ private fun SpreadCard(drawn: DrawnCard, position: String) {
         Text(
             text = drawn.card.name_zh,
             fontFamily = FontFamily.Serif,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = if (drawn.reversed) "逆位" else "顺位",
             fontFamily = FontFamily.Monospace,
-            fontSize = 9.sp,
+            fontSize = 10.sp,
             color = if (drawn.reversed) MaterialTheme.colorScheme.tertiary
                     else MaterialTheme.colorScheme.primary,
         )
