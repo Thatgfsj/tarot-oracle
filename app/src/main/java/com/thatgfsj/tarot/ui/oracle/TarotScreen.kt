@@ -116,11 +116,6 @@ fun TarotScreen(viewModel: TarotViewModel = viewModel()) {
             .background(MaterialTheme.colorScheme.background),
     ) {
         // Header + state content centered as a single block.
-        // Previously Header was pinned to the top (Spacer 40dp
-        // + Header + Spacer 24dp) and only the content below
-        // was centered — making the top gap much smaller than
-        // the bottom gap. Now everything lives inside one
-        // centered Column so the whole block is symmetric.
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -146,8 +141,12 @@ fun TarotScreen(viewModel: TarotViewModel = viewModel()) {
                 }
             }
         }
+        // Bottom-anchored developer / repo footer. Static, no link.
+        HomeFooter(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
+
+private const val REPO_NAME: String = "tarot-oracle"
 
 // ── Header / home page ─────────────────────────────────
 
@@ -167,6 +166,27 @@ private fun Header() {
             fontFamily = FontFamily.Serif,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun HomeFooter(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(bottom = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "开发者：Thatgfsj",
+            fontFamily = FontFamily.SansSerif,
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+        )
+        Text(
+            text = "仓库：$REPO_NAME",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
         )
     }
 }
