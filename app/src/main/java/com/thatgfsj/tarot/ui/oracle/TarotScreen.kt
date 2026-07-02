@@ -7,6 +7,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -170,9 +177,7 @@ private fun HomePage(
     onDrawThree: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp),
+        modifier = Modifier.padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -235,49 +240,45 @@ private fun LoadedView(
     onClear: () -> Unit,
 ) {
     val context = LocalContext.current
-    Box(
+    Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Column(
+        if (drawn.size == 1) {
+            SingleCardView(drawn.first())
+        } else {
+            SpreadView(drawn)
+        }
+        Text(
+            text = "—",
+            fontFamily = FontFamily.Serif,
+            fontSize = 4.sp,
+        )
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (drawn.size == 1) {
-                SingleCardView(drawn.first())
-            } else {
-                SpreadView(drawn)
-            }
-            Text(
-                text = "—",
-                fontFamily = FontFamily.Serif,
-                fontSize = 4.sp,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            OutlinedButton(
+                onClick = onClear,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.weight(1f),
             ) {
-                OutlinedButton(
-                    onClick = onClear,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("返回首页", fontFamily = FontFamily.Serif)
-                }
-                Button(
-                    onClick = { DeepSeekShare.shareToDeepSeek(context, drawn) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("✨  问 AI", fontFamily = FontFamily.Serif)
-                }
+                Text("返回首页", fontFamily = FontFamily.Serif)
+            }
+            Button(
+                onClick = { DeepSeekShare.shareToDeepSeek(context, drawn) },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("✨  问 AI", fontFamily = FontFamily.Serif)
+            }
             }
         }
     }
@@ -294,30 +295,18 @@ private fun LoadedView(
  */
 @Composable
 private fun SingleCardView(drawn: DrawnCard) {
-    var rotation by remember { mutableStateOf(0f) }
     var flipped by remember { mutableStateOf(false) }
-    val flippedX = if (drawn.reversed) 180f else 0f
-    // Drive animation from `flipped` — this is what the tap
-    // changes. `rotation` is the animated output, not the
-    // trigger. Previous code used LaunchedEffect(rotation)
-    // which never re-fired because rotation only changes at
-    // the end of the animation (chicken-and-egg).
-    LaunchedEffect(flipped) {
-        val target = if (flipped) 360f else 0f
-        val anim = Animatable(rotation)
-        anim.animateTo(
-            targetValue = target,
-            animationSpec = tween(durationMillis = 800, easing = LinearEasing),
-        )
-        rotation = anim.value
-    }
-    val scale = animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(280),
-        label = "card-scale-in",
+    val rotation by animateFloatAsState(
+        targetValue = if (flipped) 180f else 0f,
+        animationSpec = tween(durationMillis = 400, easing = LinearEasing),
+        label = "card-flip",
     )
+    // At > 90° the card is past the midpoint — show front.
+    // The front image is rendered inside a second graphicsLayer
+    // that adds 180° so it reads correctly (not mirrored).
+    val showFront = rotation > 90f
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // The hint fades out after the first flip.
         AnimatedVisibility(visible = !flipped) {
             Text(
                 text = "点击翻牌",
@@ -327,26 +316,30 @@ private fun SingleCardView(drawn: DrawnCard) {
                 modifier = Modifier.padding(bottom = 6.dp),
             )
         }
-        Image(
-            painter = painterResource(id = drawableId(drawn.card)),
-            contentDescription = drawn.card.name_zh,
-            contentScale = ContentScale.Fit,
+        Box(
             modifier = Modifier
                 .size(width = 160.dp, height = 230.dp)
-                .graphicsLayer {
-                    rotationY = rotation
-                    rotationX = flippedX
-                    scaleX = scale.value
-                    scaleY = scale.value
-                }
-                .clickable {
-                    flipped = !flipped
-                    // Don't manually set rotation here —
-                    // the LaunchedEffect on rotation will
-                    // pick up the new flipped value and
-                    // animate to the new target.
-                },
-        )
+                .clickable { flipped = !flipped },
+        ) {
+            if (!showFront) {
+                CardBack(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { rotationY = rotation },
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = drawableId(drawn.card)),
+                    contentDescription = drawn.card.name_zh,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            rotationY = rotation - 180f
+                        },
+                )
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(
             text = drawn.card.name_zh,
@@ -393,18 +386,14 @@ private fun SpreadView(drawn: List<DrawnCard>) {
 
 @Composable
 private fun SpreadCard(drawn: DrawnCard, position: String) {
-    var rotation by remember { mutableStateOf(0f) }
     var flipped by remember { mutableStateOf(false) }
-    val flippedX = if (drawn.reversed) 180f else 0f
-    LaunchedEffect(flipped) {
-        val target = if (flipped) 360f else 0f
-        val anim = Animatable(rotation)
-        anim.animateTo(
-            targetValue = target,
-            animationSpec = tween(durationMillis = 800, easing = LinearEasing),
-        )
-        rotation = anim.value
-    }
+    val rotation by animateFloatAsState(
+        targetValue = if (flipped) 180f else 0f,
+        animationSpec = tween(durationMillis = 400, easing = LinearEasing),
+        label = "spread-flip",
+    )
+    val showFront = rotation > 90f
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = position,
@@ -413,20 +402,28 @@ private fun SpreadCard(drawn: DrawnCard, position: String) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 6.dp),
         )
-        Image(
-            painter = painterResource(id = drawableId(drawn.card)),
-            contentDescription = drawn.card.name_zh,
-            contentScale = ContentScale.Fit,
+        Box(
             modifier = Modifier
                 .size(width = 110.dp, height = 160.dp)
-                .graphicsLayer {
-                    rotationY = rotation
-                    rotationX = flippedX
-                }
-                .clickable {
-                    flipped = !flipped
-                },
-        )
+                .clickable { flipped = !flipped },
+        ) {
+            if (!showFront) {
+                CardBack(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { rotationY = rotation },
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = drawableId(drawn.card)),
+                    contentDescription = drawn.card.name_zh,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { rotationY = rotation - 180f },
+                )
+            }
+        }
         Spacer(Modifier.height(4.dp))
         Text(
             text = drawn.card.name_zh,
@@ -451,5 +448,43 @@ private fun drawableId(card: TarotCard): Int {
     val name = card.image_res
     return remember(name) {
         ctx.resources.getIdentifier(name, "drawable", ctx.packageName)
+    }
+}
+
+/** Card back — deep purple with gold border and a centered star. */
+@Composable
+private fun CardBack(modifier: Modifier = Modifier) {
+    val gold = MaterialTheme.colorScheme.primary
+    val bg = Color(0xFF1A0F2E)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(bg)
+            .border(2.dp, gold, RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Five-pointed star outline drawn with lines
+        Canvas(modifier = Modifier.size(48.dp)) {
+            val cx = size.width / 2
+            val cy = size.height / 2
+            val r = size.minDimension / 2
+            val inner = r * 0.38f
+            val points = (0 until 10).map { i ->
+                val angle = Math.toRadians((i * 36 - 90).toDouble())
+                val radius = if (i % 2 == 0) r else inner
+                Offset(
+                    x = cx + radius * cos(angle).toFloat(),
+                    y = cy + radius * sin(angle).toFloat(),
+                )
+            }
+            for (i in points.indices) {
+                drawLine(
+                    color = gold,
+                    start = points[i],
+                    end = points[(i + 1) % points.size],
+                    strokeWidth = 2f,
+                )
+            }
+        }
     }
 }
