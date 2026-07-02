@@ -1,0 +1,32 @@
+# ─── OS / Editor ─────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Build cache ────────────────────────────────────
+.gradle/
+**/.gradle/
+**/build/
+build/
+out/
+**/local.properties
+local.properties
+
+# ─── Logs & Runtime Data ────────────────────────────
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# ─── Android / Gradle build outputs ──────────────────
+**/app/build/
+**/build/
+**/.gradle/
+**/local.properties
