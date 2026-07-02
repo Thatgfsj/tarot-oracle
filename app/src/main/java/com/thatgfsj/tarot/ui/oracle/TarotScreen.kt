@@ -339,27 +339,31 @@ private fun SingleCardView(drawn: DrawnCard) {
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = drawn.card.name_zh,
-            fontFamily = FontFamily.Serif,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = drawn.card.name_en,
-            fontFamily = FontFamily.Serif,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = if (drawn.reversed) "逆位" else "顺位",
-            fontFamily = FontFamily.Monospace,
-            fontSize = 10.sp,
-            color = if (drawn.reversed) MaterialTheme.colorScheme.tertiary
-                    else MaterialTheme.colorScheme.primary,
-        )
+        AnimatedVisibility(visible = showFront) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = drawn.card.name_zh,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = drawn.card.name_en,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = if (drawn.reversed) "逆位" else "顺位",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    color = if (drawn.reversed) MaterialTheme.colorScheme.tertiary
+                            else MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 
@@ -423,21 +427,25 @@ private fun SpreadCard(drawn: DrawnCard, position: String) {
                 )
             }
         }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = drawn.card.name_zh,
-            fontFamily = FontFamily.Serif,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = if (drawn.reversed) "逆位" else "顺位",
-            fontFamily = FontFamily.Monospace,
-            fontSize = 10.sp,
-            color = if (drawn.reversed) MaterialTheme.colorScheme.tertiary
-                    else MaterialTheme.colorScheme.primary,
-        )
+        AnimatedVisibility(visible = showFront) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = drawn.card.name_zh,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = if (drawn.reversed) "逆位" else "顺位",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    color = if (drawn.reversed) MaterialTheme.colorScheme.tertiary
+                            else MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 
