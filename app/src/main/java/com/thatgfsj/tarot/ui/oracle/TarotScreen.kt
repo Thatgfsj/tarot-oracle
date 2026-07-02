@@ -279,7 +279,6 @@ private fun LoadedView(
             ) {
                 Text("✨  问 AI", fontFamily = FontFamily.Serif)
             }
-            }
         }
     }
 }
