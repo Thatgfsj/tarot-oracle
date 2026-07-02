@@ -116,3 +116,8 @@ tarot-oracle/
 - ✅ 78 张图全 baked 进 APK
 - ✅ APK 在 `C:/Users/thatg/Desktop/tarot-oracle-v0.1.0-debug.apk`
 - ⏳ 等主席装真机后告诉我有什么要调
+
+---
+
+**开发者**：Thatgfsj
+**仓库**：tarot-oracle
